@@ -1,9 +1,11 @@
+'use strict';
+
 module.exports = app => {
 
-  app.get( '/', ( req, res ) => {
+  let Register = require('./Register');
+  let Login = require('./Login');
 
-    res.send('Hello World!')
-
-  })
+  Register( app );
+  Login( app );
 
 }
