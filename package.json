@@ -25,6 +25,7 @@
     "express-jwt": "^5.3.1",
     "mongodb": "^3.1.4",
     "mongoose": "^5.2.9",
+    "nodemailer": "^4.6.8",
     "password-validator": "^4.1.1",
     "path": "^0.12.7",
     "randomstring": "^1.1.5",

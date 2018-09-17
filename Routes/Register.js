@@ -1,16 +1,9 @@
 'use strict';
-let bcrypt = require('bcryptjs');
-let emailValidator = require("email-validator");
-let passwordValidator = require('password-validator');
-let Users = require('./../Models/Users');
-
-let passwordSchema = new passwordValidator();
-passwordSchema
-.is().min(8)
-.is().max(64)
-.has().uppercase()
-.has().lowercase()
-.has().digits();
+let bcrypt = require('bcryptjs'),
+  emailValidator = require("email-validator"),
+  passwordSchema = require('./fx/passwordSchema'),
+  sendVerificationCode = require('./fx/sendVerificationCode');
+let Users = require('../Models/Users');
 
 function isAllInfoEntered ( req ) {
 
@@ -206,14 +199,36 @@ module.exports = app => {
         if ( !err ) {
 
           //Redirect to login page
-          res.json({
-            auth: false,
-            message: 'Account creation successful, plase login.',
-            redirect: {
-              url: '/login',
-              name: 'login'
+
+          sendVerificationCode( user.email, user.emailVerificationLink, ( err, response ) => {
+
+            if ( !err ) {
+
+              res.json({
+                auth: false,
+                message: `An verification email has been sent to ${user.email}.`,
+                redirect: {
+                  url: '/login',
+                  name: 'login',
+                  timeout: 0
+                }
+              });
+
+            } else {
+
+              res.json({
+                auth: false,
+                message: `We are unable to send a verification email to ${user.email}. Please contact the administrator.`,
+                redirect: {
+                  url: '/login',
+                  name: 'login',
+                  timeout: 0
+                }
+              });
+
             }
-          });
+
+          })
 
         } else {
 

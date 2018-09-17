@@ -19,6 +19,10 @@ let userSchema = new Schema({
   description: {
     type: String
   },
+  passwordReset: {
+    key: String,
+    expiration: Date
+  },
   email: {
     type: String
   },
@@ -35,10 +39,6 @@ let userSchema = new Schema({
   },
   loginAttempts: {
     type: Array
-  },
-  ship: {
-    name: String,
-    url: String
   },
   isAdmin: {
     type: Boolean,

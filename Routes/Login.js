@@ -1,10 +1,10 @@
 let bcrypt = require('bcryptjs');
-let Users = require('./../Models/Users');
+let Users = require('../Models/Users');
 let jwt = require('jsonwebtoken');
 let numofLoginAttempts = 5;
 //new Date(year, month, day, hours, minutes, seconds, milliseconds);
 //30 minutes
-let betweenLogins = new Date(0, 0, 0, 0, 30, 0, 0);
+let betweenLogins = 1800000;
 let jwtSecret = process.env.JSONSECRET || 'idek man';
 //arch export JSONSECRET=thesecret
 
@@ -16,10 +16,12 @@ function attemptsLeft ( user ) {
   //reverse for loop for efficiency
   for ( let i = user.loginAttempts.length-1; i >= 0; i-- ) {
 
-    if ( timeofCurrentLogin - user.loginAttempts[i].date > betweenLogins ) {
+    console.log(`${timeofCurrentLogin - user.loginAttempts[i].date} ${user.loginAttempts[i].success}`)
+
+    if ( timeofCurrentLogin - user.loginAttempts[i].date < betweenLogins ) {
 
       if ( user.loginAttempts[i].success === false ) {
-        attemptsLeft--
+        attemptsLeft--;
       }
 
     } else {
@@ -33,7 +35,7 @@ function attemptsLeft ( user ) {
 
   return attemptsLeft;
 
-}
+};
 
 module.exports = app => {
 
@@ -51,8 +53,7 @@ module.exports = app => {
 
             res.json({
               auth: false,
-              message: 'There are multiple users with that email or username, please contact the administrator.',
-              user: req.user
+              message: 'There are multiple users with that email or username, please contact the administrator.'
             })
 
           } else {
@@ -65,7 +66,7 @@ module.exports = app => {
 
             Users.findOneAndUpdate(
               {_id: docs[0]._id },
-              { $push: { loginAttempts: { success: passwordValid, date: Date.now() } } },
+              { $push: { loginAttempts: { success: passwordValid, date: Date.now(), ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress } } },
               {new: true},
               function ( err, user ) {
 
@@ -77,8 +78,7 @@ module.exports = app => {
 
                     res.json({
                       auth: false,
-                      message: 'This account has been locked due to too many failed login attempts. Please try again later.',
-                      user: req.user
+                      message: 'This account has been locked due to too many failed login attempts. Please try again later.'
                     });
 
                   } else {
@@ -87,21 +87,26 @@ module.exports = app => {
 
                       //do token stuff
 
-                      delete user['password'];
-                      delete user['ip'];
-                      delete user['email'];
-                      delete user['emailVerificationLink'];
-                      delete user['loginAttempts'];
+                      user = user.toObject();
+                      delete user.password;
+                      delete user.ip;
+                      delete user.email;
+                      delete user.emailVerificationLink;
+                      delete user.loginAttempts;
+                      delete user.passwordReset;
+                      delete user.__v;
+                      delete user.iat;
+                      delete user.exp;
 
-                      var token = jwt.sign(user.toJSON(), jwtSecret, {
+                      var token = jwt.sign(user, jwtSecret, {
                         expiresIn: 86400 * 30 // 86400 = 24 hours
                       });
 
                       res.json({
                         auth: false,
                         token: token,
-                        user: req.user,
-                        message: 'Login Successful!'
+                        message: 'Login Successful!',
+                        user: user
                       });
 
                     } else {
@@ -119,8 +124,7 @@ module.exports = app => {
 
                   res.json({
                     auth: false,
-                    message: 'An unknown error has occured.',
-                    user: req.user
+                    message: 'An unknown error has occured.'
                   });
 
                   console.log( err );
@@ -137,8 +141,7 @@ module.exports = app => {
 
           res.json({
             auth: false,
-            message: 'Invalid username or email.',
-            user: req.user
+            message: 'Invalid username or email.'
           });
 
         }

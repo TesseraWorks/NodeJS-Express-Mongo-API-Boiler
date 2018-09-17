@@ -4,7 +4,8 @@ bodyParser = require('body-parser'),
 expressJwt = require('express-jwt'),
 expressServer = require('./Routes/index.js'),
 socketServer = require('./Sockets/index.js'),
-port = process.env.PORT || 3000,
+config = require('./config.json'),
+port = process.env.PORT || config.port,
 jwtSecret = process.env.JSONSECRET || 'idek man',
 //arch export JSONSECRET=thesecret
 express = require('express'),
@@ -13,7 +14,7 @@ server = require('http').Server(app),
 io = require('socket.io')(server);
 
 app.use( express.static( path.join( __dirname, 'public' ) ) );
-app.use( bodyParser.urlencoded( { extended: true } ) );
+app.use( bodyParser.urlencoded( { extended: false } ) );
 app.use( bodyParser.json() );
 app.use( expressJwt({secret: jwtSecret}) );
 app.use(function (err, req, res, next) {
